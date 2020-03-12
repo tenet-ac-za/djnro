@@ -345,7 +345,7 @@ class Name_i18n(models.Model):
                     manager.all()
                 return ', '.join([n.name for n in names_qs])
             if not lang:
-                return all_names()
+                lang = getattr(settings, 'LANGUAGE_CODE', 'en')
             try:
                 return manager.get(lang=lang).name
             except Name_i18n.DoesNotExist:
@@ -381,6 +381,7 @@ class Contact(models.Model):
     class Meta:
         verbose_name = "Contact"
         verbose_name_plural = "Contacts"
+        ordering = ['name']
 
 
 @python_2_unicode_compatible
@@ -420,6 +421,7 @@ class InstitutionContactPool(models.Model):
     class Meta:
         verbose_name = "Instutution Contact (Pool)"
         verbose_name_plural = "Instutution Contacts (Pool)"
+        ordering = ['contact__name']
 
 
 @python_2_unicode_compatible
@@ -502,6 +504,7 @@ class InstRealm(models.Model):
     class Meta:
         verbose_name = "Institution Realm"
         verbose_name_plural = "Institutions' Realms"
+        ordering = ['realm']
 
     def __str__(self):
         return '%s' % self.realm
@@ -835,7 +838,7 @@ class Institution(models.Model):
     )
 
     def __str__(self):
-        return "%s" % ', '.join([i.name for i in self.org_name.all()])
+        return "%s" % ', '.join([i.name for i in self.org_name.filter(lang=getattr(settings, 'LANGUAGE_CODE', 'en'))])
 
     get_name = Name_i18n.get_name_factory('org_name')
 
@@ -900,12 +903,12 @@ class InstitutionDetails(models.Model):
     def __str__(self):
         return _('Institution: %(inst)s, Type: %(ertype)s') % {
             # but name is many-to-many from institution
-            'inst': ', '.join([i.name for i in self.institution.org_name.all()]),
+            'inst': ', '.join([i.name for i in self.institution.org_name.filter(lang=getattr(settings, 'LANGUAGE_CODE', 'en'))]),
             'ertype': self.institution.get_ertype_display(),
         }
 
     def get_inst_name(self):
-        return ", ".join([i.name for i in self.institution.org_name.all()])
+        return ", ".join([i.name for i in self.institution.org_name.filter(lang=getattr(settings, 'LANGUAGE_CODE', 'en'))])
     get_inst_name.short_description = "Institution Name"
 
 
