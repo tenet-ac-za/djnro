@@ -665,6 +665,7 @@ class MonLocalAuthnParam(models.Model):
         ('PAP', 'PAP'),
         ('CHAP', 'CHAP'),
         ('MS-CHAPv2', 'MS-CHAPv2'),
+        ('EAP-GTC', 'GTC'),
     )
 #    MONRESPTYPES = (
 #                ('accept', 'Access-Accept expected' ),
