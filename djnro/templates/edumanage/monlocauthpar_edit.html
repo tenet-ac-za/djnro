@@ -67,11 +67,11 @@ Changes you make here will be automatically deployed to our <a class="alert-link
 
 {% block extrajs %}
 <script type="text/javascript" src="{% static 'js/showpass.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/zxcvbn.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/pwstrength-bootstrap.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js" integrity="sha512-TZlMGFY9xKj38t/5m2FzJ+RM/aD5alMHDe26p0mYUMoCF5G7ibfHUQILq0qQPV3wlsnCwL+TPRNK4vIWGLOkUQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pwstrength-bootstrap/3.1.1/pwstrength-bootstrap.min.js" integrity="sha512-VMd5IUFVM9MRhGzKSpKVZu/Rm4Wm3i8dC6eYqEtOcTaG1vn5RmwUWFiYfh4nagbeQRhQuSnHULnZ9B+st2rZ0g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script type="text/javascript">
 $(document).ready(function() {
-	$('#id_passwp').pwstrength({ common: { minChar: 12, maxChar: 64, usernameField: '#id_username', zxcvbn: true }, ui: {showProgressBar: false, showStatus: true} });
+	$('#id_passwp').pwstrength({ common: { minChar: 12, maxChar: 64, usernameField: '#id_username', zxcvbn: true }, ui: {showProgressBar: false, showStatus: true, bootstrap3:true} });
 	$('#id_passwp').showPassword();
 	$('#id_passwp').attr('required',1);
 	$('.password-verdict').addClass('help-block');
