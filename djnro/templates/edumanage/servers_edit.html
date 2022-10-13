@@ -139,19 +139,21 @@ Changes you make to your RADIUS servers must be reviewed by the Roaming Operator
 
 {% block extrajs %}
 <script type="text/javascript" src="{% static 'js/showpass.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/zxcvbn.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/pwstrength-bootstrap.js' %}"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js" integrity="sha512-TZlMGFY9xKj38t/5m2FzJ+RM/aD5alMHDe26p0mYUMoCF5G7ibfHUQILq0qQPV3wlsnCwL+TPRNK4vIWGLOkUQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/pwstrength-bootstrap/3.1.1/pwstrength-bootstrap.min.js" integrity="sha512-VMd5IUFVM9MRhGzKSpKVZu/Rm4Wm3i8dC6eYqEtOcTaG1vn5RmwUWFiYfh4nagbeQRhQuSnHULnZ9B+st2rZ0g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3{% if GOOGLE_MAPS_API_KEY %}&amp;key={{ GOOGLE_MAPS_API_KEY }}{% endif %}"></script>
 <script type="text/javascript">
 $(document).ready(function() {
 	/* https://github.com/ablanco/jquery.pwstrength.bootstrap */
-	$('#id_secret').pwstrength({ common: { minChar: 12, maxChar: 64, usernameField: '#id_name', userInputs: [ '#id_address', '#id_name' ], zxcvbn: true }, ui: {showProgressBar: false, showStatus: true} });
+	$('#id_secret').pwstrength({ common: { minChar: 20, maxChar: 64, usernameField: '#id_name', invalidCharsRegExp: new RegExp(/[\s,'"%]/), userInputs: [ '#id_address', '#id_name' ], zxcvbn: true }, ui: {showProgressBar: false, showStatus: true, bootstrap3: true} });
 	$('#id_secret').showPassword();
 	$('#id_host').attr('pattern', '((^|\.)((25[0-5])|(2[0-4][0-9])|(1[0-9][0-9])|([1-9]?[0-9]))){4}$');
 	$('#id_host').attr('title', 'Please supply a valid IP address').attr('required',1);
 	$('#id_name').attr('required',1);
 	$('#id_secret').attr('required',1);
-	$('#id_secret').attr('title', 'Please supply a strong password longer than 12 characters');
+	$('#id_secret').attr('title', 'Please supply a strong password longer than 20 characters');
+	$('#id_secret').attr('minlength', 20);
+	$('#id_secret').attr('maxlength', 64);
 	$('.password-verdict').addClass('help-block');
 });
 </script>
