@@ -9,6 +9,9 @@
 <div class="alert alert-info alert-dismissible" role="alert">
 Changes you make here will be automatically deployed to our <a class="alert-link" href="/status/technical/">monitoring system</a> within an hour, and will immediately update your <a class="alert-link" href="/faq/testing/#sp">test credentials</a>.
 </div>
+<div class="alert alert-warning alert-dismissible" role="alert">
+Note: The account you provide here only needs to be able to authenticate for eduroam and <strong>should not</strong> have privileged access to any other enterprise system.
+</div>
 <form method="POST" class="">
 	{% csrf_token %}
 	{% if form.non_field_errors %}
