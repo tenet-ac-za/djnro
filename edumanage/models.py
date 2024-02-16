@@ -660,6 +660,7 @@ class MonLocalAuthnParam(models.Model):
         ('PEAP', 'EAP-PEAP'),
         ('TTLS', 'EAP-TTLS'),
         ('TLS', 'EAP-TLS'),
+        ('PWD', 'EAP-PWD'),
     )
     EAP2TYPES = (
         ('PAP', 'PAP'),
