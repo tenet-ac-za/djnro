@@ -10,6 +10,20 @@
 <div class="alert alert-info alert-dismissible" role="alert">
 Changes you make to your RADIUS servers must be reviewed by the Roaming Operator before they are pushed into production. Your changes here will be queued, and will typically be processed within one working day. You will be contacted once this has happened. If you need to co-ordinate a service-affecting change (e.g. to change a shared secret), please make the change here first and then <a href="/contact" class="alert-link">contact us</a> to schedule a time before making the change on your infrastructure.
 </div>
+<div class="alert alert-warning alert-dismissible" role="alert" id="id_radsec_cert_warning" style="display: none;">
+	<p>
+		Enabling RADIUS over TLS (RadSec) requires mutual certificate authentication using a certificate issued by the eduroam Certificate Service. 
+		Please ensure you have a valid certificate installed on your RADIUS server <strong>before</strong> enabling RadSec.
+	</p>
+	<p>
+		If you need a RadSec certificate, please add your server below with the correct <em>External Hostname</em> and then supply a 
+		<span title="openssl req -new -newkey rsa:4096 -out test.csr -keyout test.key -subj /DC=net/DC=geant/DC=eduroam/C=ZA/O=Example University/CN=will.be.replaced">
+		matching certificate signing request (CSR)</span> to the <a href="/contact" class="alert-link">Roaming Operator</a>.
+	</p>
+	<p>
+		If your RADIUS software supports it, you may wish to consider using RADIUS TLS-PSK (Pre-Shared Key) instead.
+	</p>
+</div>
 <form method="POST" class="form-horizontal">
 	{% if form.non_field_errors %}
 	<ul>
@@ -108,7 +122,7 @@ Changes you make to your RADIUS servers must be reviewed by the Roaming Operator
 		<div class="form-group {% if form.secret.errors %} error {% endif %}">
 			<label class="control-label" for="id_secret"><b>{% trans "RADIUS Shared Secret" %}</b></label>
 			<div class="controls">
-				<input type="password" maxlength="80" name="secret" id="id_secret" {% if edit %}value='{{form.instance.secret}}'{% endif %} {% if form.data.secret %}value='{{form.data.secret}}'{% endif %}>
+				<input type="password" autocomplete="off" maxlength="80" name="secret" id="id_secret" {% if edit %}value='{{form.instance.secret}}'{% endif %} {% if form.data.secret %}value='{{form.data.secret}}'{% endif %}>
 				{% if form.secret.errors %} <div class="alert-danger"> {{ form.secret.errors|join_with_linebreaks }} </div>
 				{% endif %} <span class="help-block">{{ form.secret.help_text }}</span>
 			</div>
@@ -120,7 +134,40 @@ Changes you make to your RADIUS servers must be reviewed by the Roaming Operator
 			<div class="controls">
 				{{ form.proto }}
 				{% if form.proto.errors %} <div class="alert-danger"> {{ form.proto.errors|join_with_linebreaks }} </div>
-				{% endif %} <!-- <span class="help-block">{{ form.proto.help_text }}</span> -->
+				{% endif %} <span class="help-block">{{ form.proto.help_text }}</span>
+			</div>
+		</div>
+	</div>
+	{% if institution.ertype in ERTYPE_ROLES.IDP %}
+	<div class="col-md-6"{% if form.proto.value not in RADPROTOS.TLSPSK %} style="display: none"{% endif %}>
+		<div class="form-group {% if form.psk_identity.errors %} error {% endif %}">
+			<label class="control-label" for="id_psk_identity"><b>{% trans "Your TLS-PSK Identity" %}</b></label>
+			<div class="controls">
+				{{ form.psk_identity }}
+				{% if form.psk_identity.errors %} <div class="alert-danger"> {{ form.psk_identity.errors|join_with_linebreaks }} </div>
+				{% endif %} <span class="help-block">{{ form.psk_identity.help_text }}</span>
+			</div>
+		</div>
+	</div>
+	{% endif %}
+	{% if institution.ertype in ERTYPE_ROLES.SP %}
+	<div class="col-md-6"{% if form.proto.value not in RADPROTOS.TLSPSK %} style="display: none"{% endif %}>
+		<div class="form-group">
+			<label class="control-label" for="our_psk_identity"><b>{% trans "Our TLS-PSK Identity" %}</b></label>
+			<div class="controls">
+				<input type="text" id="our_psk_identity" value="{{ institution.instid }}@{{ OUR_TLSPSK_REALM }}" disabled>
+				<span class="help-block">{{ form.psk_identity.help_text }}</span>
+			</div>
+		</div>
+	</div>
+	{% endif %}
+	<div class="col-md-6"{% if form.proto.value not in RADPROTOS.TLSPSK %} style="display: none"{% endif %}>
+		<div class="form-group {% if form.psk_key.errors %} error {% endif %}">
+			<label class="control-label" for="id_psk_key"><b>{% trans "TLS-PSK Pre-Shared Key" %}</b></label>
+			<div class="controls">
+				{{ form.psk_key }}
+				{% if form.psk_key.errors %} <div class="alert-danger"> {{ form.psk_key.errors|join_with_linebreaks }} </div>
+				{% endif %} <span class="help-block">{{ form.psk_key.help_text }}</span>
 			</div>
 		</div>
 	</div>
@@ -143,24 +190,68 @@ Changes you make to your RADIUS servers must be reviewed by the Roaming Operator
 <script src="//cdnjs.cloudflare.com/ajax/libs/pwstrength-bootstrap/3.1.1/pwstrength-bootstrap.min.js" integrity="sha512-VMd5IUFVM9MRhGzKSpKVZu/Rm4Wm3i8dC6eYqEtOcTaG1vn5RmwUWFiYfh4nagbeQRhQuSnHULnZ9B+st2rZ0g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3{% if GOOGLE_MAPS_API_KEY %}&amp;key={{ GOOGLE_MAPS_API_KEY }}{% endif %}"></script>
 <script type="text/javascript">
+const ipaddr_re = '((^|\\.)((25[0-5])|(2[0-4][0-9])|(1[0-9][0-9])|([1-9]?[0-9]))){4}$';
+const nai_re = '^[^@]{1,}@[a-zA-Z][a-zA-Z0-9\\-]{0,62}(\\.[a-zA-Z0-9\\-]{1,63}){1,}$';
+const fqdn_re = '^[a-zA-Z][a-zA-Z0-9\\-]{0,62}(\\.[a-zA-Z0-9\\-]{1,63}){1,}$';
+
+function generateStrongRandomString(length = 20) {
+	// exclude "'% becauyse they need escaping in radsecproxy
+	const charset = '!#$&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]$`abcdefghijklmnopqrstuvwxyz{|}~';
+    let result = '';
+    const values = new Uint32Array(length);
+    window.crypto.getRandomValues(values);
+    for (let i = 0; i < length; i++) {
+        result += charset[values[i] % charset.length];
+    }
+    return result;
+}
+function updateErtypeExpectations() {
+	if (parseInt($('#id_ertype').val()) & 1) {
+		$('.col-md-6:has(.form-group #id_rad_pkt_type)').show();
+		$('.col-md-6:has(.form-group #id_auth_port)').show();
+		$('.col-md-6:has(.form-group #id_acct_port)').show();
+		$('.col-md-6:has(.form-group #id_status_server)').show();
+		$('.col-md-6:has(.form-group #our_psk_identity)').hide();
+		if ($('#id_proto').val().match('psk')) {
+			$('.col-md-6:has(.form-group #id_psk_identity)').show();
+			$('#id_psk_identity').attr('pattern', nai_re);
+			if (parseInt($('#id_ertype').val()) & 2) {
+				$('.col-md-6:has(.form-group #our_psk_identity)').show();
+			}
+		}
+	} else {
+		$('.col-md-6:has(.form-group #id_rad_pkt_type)').hide();
+		$('.col-md-6:has(.form-group #id_auth_port)').hide();
+		$('.col-md-6:has(.form-group #id_acct_port)').hide();
+		$('.col-md-6:has(.form-group #id_status_server)').hide();
+		$('.col-md-6:has(.form-group #id_psk_identity)').hide();
+		$('#id_psk_identity').removeAttr('pattern');
+		$('.col-md-6:has(.form-group #our_psk_identity)').hide();
+		if ($('#id_proto').val().match('psk')) {
+			if (parseInt($('#id_ertype').val()) & 2) {
+				$('.col-md-6:has(.form-group #our_psk_identity)').show();
+			}
+		}
+	}
+}
 function updateHostFieldExpectations() {
 	$('#id_name').attr('required',1);
 	/* change the semantics of the host field depending on TLS */
 	var proto = $('#id_proto').val();
-	if (proto.match('tls')) {
-		$('#id_host').attr('pattern', '^[a-zA-Z][a-zA-Z0-9]{1,62}(\.[a-zA-Z0-9]{1,63}){1,}$');
-		$('#id_host').attr('title', 'Please supply a valid FQDN (DNS hostname)').attr('required',1);
-		$('label[for="id_host"] b').text('External Hostname');
-		$('#id_host + .help-block').html('FQDN hostname (<strong>must</strong> resolve in DNS)');
+	if (proto.match('tls') || proto.match('psk')) {
 		if ($('#id_auth_port').val() == '1812') {
 			$('#id_auth_port').val('2083');
 		}
 		if ($('#id_acct_port').val() == '1813') {
 			$('#id_acct_port').val('2083');
 		}
+		$('#id_auth_port + .help-block').text('Default for RadSec: 2083');
+		$('#id_acct_port + .help-block').text('Default for RadSec: 2083');
 		/* secret is fixed for radsec */
-		$('#id_secret').data('original_password', $('#id_secret').val());
-		$('#id_secret').val('radsec');
+		if ($('#id_secret').val() != 'radsec') {
+			$('#id_secret').data('original_password', $('#id_secret').val());
+			$('#id_secret').val('radsec');
+		}
 		$('#id_secret').attr('title', 'For ' + proto.toUpperCase() + ' the secret must be "radsec"').attr('required',1);
 		try {
 			$('#id_secret').pwstrength('destroy');
@@ -170,8 +261,38 @@ function updateHostFieldExpectations() {
 		$('#id_secret').closest('.form-group').removeClass('has-error').removeClass('has-warning').removeClass('has-success');
 		$('#id_secret ~ .password-toggle i').removeClass('fa-eye').addClass('fa-eye-slash');
 		$('#id_secret').attr('type', 'text');
+		$('.col-md-6:has(.form-group #id_secret)').css({ 'opacity': 0.5 })
+		if (proto.match('psk')) {
+			$('#id_host').attr('pattern', ipaddr_re);
+			$('#id_host').attr('title', 'Please supply a valid IP address').attr('required',1);
+			$('label[for="id_host"] b').text('Host External IP Address');
+			$('#id_host + .help-block').text('IP address of RADIUS server');
+			$('#id_radsec_cert_warning').hide();
+			if (parseInt($('#id_ertype').val()) & 1) {
+				$('.col-md-6:has(.form-group #id_psk_identity)').show();
+				$('#id_psk_identity').attr('pattern', nai_re);
+			}
+			if (parseInt($('#id_ertype').val()) & 2) {
+				$('.col-md-6:has(.form-group #our_psk_identity)').show();
+			}
+			$('#id_psk_identity').attr('title', 'IdP must supply a unique NAI (e.g. realm@hostname)')
+			$('.col-md-6:has(.form-group #id_psk_key)').show()
+			$('#id_psk_key').attr('title', 'Please supply a strong, random string longer than 20 characters');
+			if ($('#id_psk_key').val() == '') {
+				$('#id_psk_key').val(generateStrongRandomString());
+			}
+		} else {
+			$('#id_host').attr('pattern', fqdn_re);
+			$('#id_host').attr('title', 'Please supply a valid FQDN (DNS hostname)').attr('required',1);
+			$('label[for="id_host"] b').text('External Hostname');
+			$('#id_host + .help-block').html('FQDN hostname (<strong>must</strong> resolve in DNS)');
+			$('#id_radsec_cert_warning').show();
+			$('.col-md-6:has(.form-group #id_psk_identity)').hide();
+			$('.col-md-6:has(.form-group #id_psk_key)').hide()
+			$('.col-md-6:has(.form-group #our_psk_identity)').hide();
+		}
 	} else {
-		$('#id_host').attr('pattern', '((^|\.)((25[0-5])|(2[0-4][0-9])|(1[0-9][0-9])|([1-9]?[0-9]))){4}$');
+		$('#id_host').attr('pattern', ipaddr_re);
 		$('#id_host').attr('title', 'Please supply a valid IP address').attr('required',1);
 		$('label[for="id_host"] b').text('Host External IP Address');
 		$('#id_host + .help-block').text('IP address of RADIUS server');
@@ -181,38 +302,53 @@ function updateHostFieldExpectations() {
 		if ($('#id_acct_port').val() == '2083') {
 			$('#id_acct_port').val('1813');
 		}
+		$('#id_auth_port + .help-block').text('{{ form.auth_port.help_text }}');
+		$('#id_acct_port + .help-block').text('{{ form.acct_port.help_text }}');
 		if ($('#id_secret').val() == 'radsec') {
 			/* try restore the original secret if we can */
 			$('#id_secret ~ .password-toggle i').removeClass('fa-eye-slash').addClass('fa-eye');
 			$('#id_secret').attr('type', 'password');
 			$('#id_secret').val($('#id_secret').data('original_password'));
 		}
+		$('.col-md-6:has(.form-group #id_secret)').css({ 'opacity': 'initial' })
 		$('#id_secret').attr('title', 'Please supply a strong, random string longer than 20 characters').attr('required',1);
-		$('#id_secret').attr('minlength', 20).attr('maxlength', 64);
-		/* https://github.com/ablanco/jquery.pwstrength.bootstrap */
-		$('#id_secret').pwstrength({
-			common: {
-				minChar: 20,
-				maxChar: 64,
-				usernameField: '#id_name',
-				invalidCharsRegExp: new RegExp(/[\s,'"%]/),
-				userInputs: [ '#id_address', '#id_name' ],
-				zxcvbn: true
-			}, 
-			ui: {
-				showProgressBar: false,
-				showStatus: true,
-				bootstrap3: true
-			}
-		});
-		$('.password-verdict').addClass('help-block');
+		$('#id_secret').attr('minlength', 20).attr('maxlength', 80);
+		if (! $('.password-verdict').length) {
+			/* https://github.com/ablanco/jquery.pwstrength.bootstrap */
+			$('#id_secret').pwstrength({
+				common: {
+					minChar: 20,
+					maxChar: 80,
+					usernameField: '#id_name',
+					invalidCharsRegExp: new RegExp(/[\s,'"%]/),
+					userInputs: [ '#id_address', '#id_name' ],
+					zxcvbn: true
+				},
+				ui: {
+					showProgressBar: false,
+					showStatus: true,
+					bootstrap3: true
+				}
+			});
+			$('.password-verdict').addClass('help-block');
+		}
+		$('#id_radsec_cert_warning').hide();
+		$('.col-md-6:has(.form-group #id_psk_identity)').hide();
+		$('.col-md-6:has(.form-group #id_psk_key)').hide();
+		$('.col-md-6:has(.form-group #our_psk_identity)').hide();
 	}
 }
 
 $(document).ready(function() {
 	$('#id_secret').showPassword();
+	if ($('#id_secret').val() == '') {
+		$('#id_secret').val(generateStrongRandomString());
+	}
+	$('#id_psk_key').showPassword();
 	$('#id_proto').on('change', updateHostFieldExpectations);
+	$('#id_ertype').on('change', updateErtypeExpectations);
 	updateHostFieldExpectations();
+	updateErtypeExpectations();
 });
 </script>
 {% endblock %}

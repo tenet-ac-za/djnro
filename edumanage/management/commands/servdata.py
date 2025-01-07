@@ -5,7 +5,8 @@ warnings.simplefilter("ignore", DeprecationWarning)
 
 from optparse import make_option
 from django.core.management.base import BaseCommand
-from edumanage.models import InstServer, Institution, ERTYPES, ERTYPE_ROLES
+from django.conf import settings
+from edumanage.models import InstServer, Institution, ERTYPES, ERTYPE_ROLES, RADPROTOS
 
 
 class Command(BaseCommand):
@@ -76,6 +77,11 @@ def servdata():
         srv_dict['secret'] = srv.secret
         srv_dict['addr_type'] = srv.addr_type
         srv_dict['proto'] = srv.proto
+        if srv.proto == RADPROTOS.TLSPSK:
+            tlspsk_realm = settings.NRO_TLSPSK_REALM if hasattr(settings,"NRO_TLSPSK_REALM") else 'localhost'
+            # assuming the ManyToManyField is really many-to-one institution, which is true unless people play in the admin interface
+            srv_dict['psk_identity'] = "%s@%s" % (srv.instid.first().instid, tlspsk_realm)
+            srv_dict['psk_key'] = srv.psk_key
         root['clients'].update({srv_id: srv_dict})
 
     servers = hosts.filter(ertype__in=ERTYPE_ROLES.IDP)
@@ -96,6 +102,9 @@ def servdata():
         srv_dict['status_server'] = bool(srv.status_server)
         srv_dict['addr_type'] = srv.addr_type
         srv_dict['proto'] = srv.proto
+        if srv.proto == RADPROTOS.TLSPSK:
+            srv_dict['psk_identity'] = srv.psk_identity
+            srv_dict['psk_key'] = srv.psk_key
         root['servers'].update({srv_id: srv_dict})
 
     if insts:
