@@ -16,18 +16,22 @@
 (function($){
 $.fn.extend({
 showPassword: function() {
+    var input_password	= $(this);
+    var p = input_password.attr('type') == 'password';
+    //create the icon and assign
+    var icon_password = $('<span tabindex="100" class="input-group-addon password-toggle"><i class="fa fa-eye' + (p ? '' : '-slash') + '"></i></span>').css('cursor', 'help');
 
-var input_password	= $(this);
-//create the icon and assign
-var icon_password = $('<span tabindex="100" class="add-on"><i class="fa fa-eye"></i></span>').css('cursor', 'help').tooltip({trigger:'click'});
-icon_password.attr('data-original-title', $(this).attr('value'));
-input_password.on({
-input	: function() {
-icon_password.attr('data-original-title', $(this).attr('value'));
-}
-});
-// Create the wrap and append the icon
-input_password.wrap('<div class="input-append" />').after(icon_password);
+    icon_password.on('click', function() {
+        if (input_password.attr('type') == 'password') {
+            input_password.attr('type', 'text');
+            icon_password.find('i').removeClass('fa-eye').addClass('fa-eye-slash');
+        } else {
+            input_password.attr('type', 'password');
+            icon_password.find('i').removeClass('fa-eye-slash').addClass('fa-eye');
+        }
+    });
+    // Create the wrap and append the icon
+    input_password.wrap('<div class="input-group" />').before(icon_password);
 
         }
     });
