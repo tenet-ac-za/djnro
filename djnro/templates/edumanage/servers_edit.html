@@ -168,8 +168,8 @@ function updateHostFieldExpectations() {
 			// ignore error when pwstrength doesn't exist
 		}
 		$('#id_secret').closest('.form-group').removeClass('has-error').removeClass('has-warning').removeClass('has-success');
-		$('#id_secret + span[class="add-on"]').remove();
-		$('#id_secret').get(0).type = 'text';
+		$('#id_secret ~ .password-toggle i').removeClass('fa-eye').addClass('fa-eye-slash');
+		$('#id_secret').attr('type', 'text');
 	} else {
 		$('#id_host').attr('pattern', '((^|\.)((25[0-5])|(2[0-4][0-9])|(1[0-9][0-9])|([1-9]?[0-9]))){4}$');
 		$('#id_host').attr('title', 'Please supply a valid IP address').attr('required',1);
@@ -183,7 +183,8 @@ function updateHostFieldExpectations() {
 		}
 		if ($('#id_secret').val() == 'radsec') {
 			/* try restore the original secret if we can */
-			$('#id_secret').get(0).type = 'password';
+			$('#id_secret ~ .password-toggle i').removeClass('fa-eye-slash').addClass('fa-eye');
+			$('#id_secret').attr('type', 'password');
 			$('#id_secret').val($('#id_secret').data('original_password'));
 		}
 		$('#id_secret').attr('title', 'Please supply a strong, random string longer than 20 characters').attr('required',1);
@@ -205,12 +206,11 @@ function updateHostFieldExpectations() {
 			}
 		});
 		$('.password-verdict').addClass('help-block');
-		$('#id_secret').showPassword();
 	}
 }
 
 $(document).ready(function() {
-	// $('#id_secret').showPassword();
+	$('#id_secret').showPassword();
 	$('#id_proto').on('change', updateHostFieldExpectations);
 	updateHostFieldExpectations();
 });
