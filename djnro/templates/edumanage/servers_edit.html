@@ -198,6 +198,17 @@ const ipaddr_re = '((^|\\.)((25[0-5])|(2[0-4][0-9])|(1[0-9][0-9])|([1-9]?[0-9]))
 const nai_re = '^[^@]{1,}@[a-zA-Z][a-zA-Z0-9\\-]{0,62}(\\.[a-zA-Z0-9\\-]{1,63}){1,}$';
 const fqdn_re = '^[a-zA-Z][a-zA-Z0-9\\-]{0,62}(\\.[a-zA-Z0-9\\-]{1,63}){1,}$';
 
+function generateStrongRandomString(length = 20) {
+	// exclude "'% becauyse they need escaping in radsecproxy
+	const charset = '!#$&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]$`abcdefghijklmnopqrstuvwxyz{|}~';
+	let result = '';
+	const values = new Uint32Array(length);
+	window.crypto.getRandomValues(values);
+	for (let i = 0; i < length; i++) {
+		result += charset[values[i] % charset.length];
+	}
+	return result;
+}
 function updateErtypeExpectations() {
 	if (parseInt($('#id_ertype').val()) & 1) {
 		$('.col-md-6:has(.form-group #id_rad_pkt_type)').show();
@@ -252,7 +263,7 @@ function updateHostFieldExpectations() {
 			// ignore error when pwstrength doesn't exist
 		}
 		$('#id_secret').closest('.form-group').removeClass('has-error').removeClass('has-warning').removeClass('has-success');
-		$('#id_secret + span[class="add-on"]').remove();
+		$('#id_secret ~ .password-toggle i').removeClass('fa-eye').addClass('fa-eye-slash');
 		$('#id_secret').attr('type', 'text');
 		$('.col-md-6:has(.form-group #id_secret)').css({ 'opacity': 0.5 })
 		if (proto.match('psk')) {
@@ -271,6 +282,9 @@ function updateHostFieldExpectations() {
 			$('#id_psk_identity').attr('title', 'IdP must supply a unique NAI (e.g. realm@hostname)')
 			$('.col-md-6:has(.form-group #id_psk_key)').show()
 			$('#id_psk_key').attr('title', 'Please supply a strong, random string longer than 20 characters');
+			if ($('#id_psk_key').val() == '') {
+				$('#id_psk_key').val(generateStrongRandomString());
+			}
 		} else {
 			$('#id_host').attr('pattern', fqdn_re);
 			$('#id_host').attr('title', 'Please supply a valid FQDN (DNS hostname)').attr('required',1);
@@ -296,6 +310,7 @@ function updateHostFieldExpectations() {
 		$('#id_acct_port + .help-block').text('{{ form.acct_port.help_text }}');
 		if ($('#id_secret').val() == 'radsec') {
 			/* try restore the original secret if we can */
+			$('#id_secret ~ .password-toggle i').removeClass('fa-eye-slash').addClass('fa-eye');
 			$('#id_secret').attr('type', 'password');
 			$('#id_secret').val($('#id_secret').data('original_password'));
 		}
@@ -330,6 +345,9 @@ function updateHostFieldExpectations() {
 
 $(document).ready(function() {
 	$('#id_secret').showPassword();
+	if ($('#id_secret').val() == '') {
+		$('#id_secret').val(generateStrongRandomString());
+	}
 	$('#id_psk_key').showPassword();
 	$('#id_proto').on('change', updateHostFieldExpectations);
 	$('#id_ertype').on('change', updateErtypeExpectations);
