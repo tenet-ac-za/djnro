@@ -161,6 +161,8 @@
 												+ "<dt>Number of APs</dt><dd>"
 												+ jsonMarker.AP_no
 												+ "&nbsp;</dd>"
+												+ (jsonMarker.physical_avail == '0' ? '' : '<dt>Access Restrictions</dt><dd class="physical_avail">may have limited public access</dd>')
+												+ (jsonMarker.operation_hours == '' ? '' : '<dt>Operation Hours</dt><dd>' + jsonMarker.operation_hours + '</dd>')
 												+ (jsonMarker.stage == 1 ? '' : '<dt class="preproduction">Stage</dt><dd class="preproduction">Testing/Preproduction</dd>')
 												+ "</dl>"
 												+ "</div>"
