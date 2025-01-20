@@ -2103,6 +2103,8 @@ def ourPoints(institution=None, cache_flush=False):
             point['SSID'] = u"%s" % (sl.SSID)
             point['key'] = u"%s" % sl.pk
             point['stage'] = u"%s" % (sl.stage)
+            point['physical_avail'] = u"%s" % (sl.physical_avail)
+            point['operation_hours'] = u"%s" % (sl.operation_hours)
             points[cache_key].append(point)
 
         points_ret.extend(points[cache_key])
@@ -2819,7 +2821,8 @@ def cat_user_api_proxy(request, cat_instance=None):
     if max_age > 0:
         patch_response_headers(resp, max_age)
     return resp
-    
+
+
 def to_xml(ele, encoding="UTF-8"):
     '''
     Convert and return the XML for an *ele*

@@ -150,7 +150,8 @@ button.btnlogin {
 	color: #337ab7;
 }
 
-/* differentiate pre-production sites */
-dd.preproduction {
+/* differentiate pre-production or restricted sites */
+dd.preproduction,
+dd.physical_avail {
 	color: rgb(230, 93, 0);
 }
