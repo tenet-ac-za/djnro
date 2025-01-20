@@ -144,6 +144,7 @@ input[readonly].input {
 	padding-top: 15px;
 }
 
-dd.preproduction {
+dd.preproduction,
+dd.physical_avail {
 	color: rgb(230, 93, 0);
 }
