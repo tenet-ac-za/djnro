@@ -687,8 +687,9 @@ def cat_enroll(request):
                 params['value[S%d-lang]' % cq_counter] = lang
             return cq_counter + 1
         cq_counter = 1
-        cq_counter = add_option_to_params(params, cq_counter, 'ATTRIB-INSTITUTION-TYPE', get_ertype_string(
-            inst.ertype).replace("+", "")) # CAT ADMIN API expects IdP+SP as IdPSP
+        inst_type = (cat_instance.get('CAT_FORCE_INSTITUTION_TYPE') or get_ertype_string(
+            inst.ertype)).replace("+", "") # CAT ADMIN API expects IdP+SP as IdPSP
+        cq_counter = add_option_to_params(params, cq_counter, 'ATTRIB-INSTITUTION-TYPE', inst_type)
         added_lang_c = False
         for iname in inst.org_name.all():
             langs = [iname.lang]
@@ -2737,7 +2738,7 @@ def cat_user_api_proxy(request, cat_instance=None):
     if max_age > 0:
         patch_response_headers(resp, max_age)
     return resp
-    
+
 def to_xml(ele, encoding="UTF-8"):
     '''
     Convert and return the XML for an *ele*
