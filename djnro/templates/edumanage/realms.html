@@ -27,8 +27,13 @@
     {% for realm in realms %}
   	<tr class="GradeC">
     	<td>{{realm.realm}}</td>
+    	{% if realm.get_servers %}
     	<td>{{realm.get_servers}}</td>
     	<td style="text-align: center;"><a href="{% url 'edit-realms' realm.pk %}" class="btn btn-small">{% trans "edit" %}</a> <a href="#" id="del_realm_{{realm.pk}}" data-realmname="{{realm.realm}}" class="btn btn-small btn-warning">{% trans "delete" %}</a></td>
+    	{% else %}
+		<td>Server: Managed RADIUS, Type: IdP</td>
+		<td style="text-align: center;"><a href="/contact">contact NRO</a></td>
+    	{% endif %}
     </tr>
   	{% endfor %}
   	</tbody>
