@@ -108,6 +108,8 @@ function placeMarkers() {
 							"<dt>Encryption</dt><dd>" + jsonMarker.enc + "&nbsp;</dd>" +
 							"<dt>SSID</dt><dd>" + jsonMarker.SSID + "&nbsp;</dd>" +
 							"<dt>Number of APs</dt><dd>" + jsonMarker.AP_no + "&nbsp;</dd>" +
+							(jsonMarker.physical_avail == '0' ? '' : '<dt>Access Restrictions</dt><dd class="physical_avail">may have limited public access</dd>') +
+							(jsonMarker.operation_hours == '' ? '' : '<dt>Operation Hours</dt><dd>' + jsonMarker.operation_hours + '</dd>') +
 							"<dt>Stage</dt><dd>" + (jsonMarker.stage == 1 ? 'Active' : 'Testing/Preproduction') + "&nbsp;</dd>" +
 						"</dl>" +
 						"</div>" +
